@@ -1,0 +1,175 @@
+{
+  "repo": "dynamic_port_opt",
+  "main_notebook": "notebook/multi_factor_copula_poc.ipynb",
+  "preferred_baseline_strategy": "Static HMM with momentum/Gold/BTC 60/30/10 daily exposure",
+  "best_confirmed_joint_config": {
+    "sources": {
+      "usd": "result/joint_confirm_603010_504d_1m_overlay_summary_usd.csv",
+      "thb": "result/joint_confirm_603010_504d_1m_overlay_summary_thb.csv"
+    },
+    "mix_weights": {
+      "static_hmm": 0.6,
+      "gold": 0.3,
+      "btc": 0.1
+    },
+    "equity_sleeve": {
+      "universe_mode": "sp500_pit",
+      "n_assets": 30,
+      "selection_rule": "top liquid S&P 500 members as of each rebalance date",
+      "n_clusters": 4,
+      "lookback_days": 504,
+      "rebalance_freq": "ME",
+      "max_weight": 0.08,
+      "include_momentum_features": true,
+      "include_momentum_signal": true,
+      "momentum_signal_mode": "mom_63",
+      "feature_flags": {
+        "resid_vol": false,
+        "drawdown": false,
+        "downside_beta": false
+      }
+    },
+    "overlay": {
+      "strategic_rebalance_months": 1,
+      "daily_exposure_overlay": true
+    },
+    "usd_metrics": {
+      "total_return": 28.756681968328007,
+      "cagr": 0.25465892944329993,
+      "annual_vol": 0.10967577916916,
+      "sharpe": 1.8512164449363333,
+      "sortino": 2.4700670053811415,
+      "max_drawdown": -0.11359776061074134,
+      "hit_rate": 0.5055732484076433
+    },
+    "thb_metrics": {
+      "total_return": 26.64766365131539,
+      "cagr": 0.24850724131885826,
+      "annual_vol": 0.12092294782441732,
+      "sharpe": 1.6490277276593996,
+      "sortino": 2.251287179636261,
+      "max_drawdown": -0.12210458197239371,
+      "hit_rate": 0.4973460721868365
+    }
+  },
+  "legacy_embedded_notebook_baseline": {
+    "source": "result/overlay_comparison_summary.csv",
+    "mix_weights": {
+      "static_hmm": 0.6,
+      "gold": 0.3,
+      "btc": 0.1
+    },
+    "equity_sleeve": {
+      "universe_mode": "sp500_pit",
+      "n_assets": 30,
+      "selection_rule": "top liquid S&P 500 members as of each rebalance date",
+      "n_clusters": 4,
+      "lookback_days": 756,
+      "rebalance_freq": "ME",
+      "max_weight": 0.08,
+      "include_momentum_features": true,
+      "include_momentum_signal": true,
+      "momentum_signal_mode": "mom_63",
+      "feature_flags": {
+        "resid_vol": false,
+        "drawdown": false,
+        "downside_beta": false
+      }
+    },
+    "overlay": {
+      "strategic_rebalance_months": 3,
+      "daily_exposure_overlay": true
+    },
+    "usd_metrics": {
+      "total_return": 27.838859857145998,
+      "cagr": 0.25203347339188054,
+      "annual_vol": 0.11523841824683481,
+      "sharpe": 1.749076159442106,
+      "sortino": 2.3071809098704676,
+      "max_drawdown": -0.0981383158237662,
+      "hit_rate": 0.5023885350318471
+    },
+    "thb_metrics": {
+      "total_return": 25.78175241859751,
+      "cagr": 0.24585379751059322,
+      "annual_vol": 0.12595122682291207,
+      "sharpe": 1.5712062013527877,
+      "sortino": 2.1202658827065215,
+      "max_drawdown": -0.11607682495503413,
+      "hit_rate": 0.49522292993630573
+    }
+  },
+  "sweep_context": {
+    "lookback_source": "result/static_hmm_603010_lookback_sweep.csv",
+    "rebalance_source": "result/static_hmm_603010_rebalance_sweep.csv",
+    "momentum_signal_source": "result/static_hmm_603010_momentum_signal_variants.csv",
+    "asset_breadth_source": "result/static_hmm_603010_asset_sweep_momentum_compare.csv"
+  },
+  "thailand_pit_status": {
+    "membership_supported": true,
+    "market_data_ready": true,
+    "membership_source": "port_opt_advance/data/thai_stock/set100_ticker_start_end.csv",
+    "cache_build_script": "scripts/build_thai_set100_cache.py",
+    "cache_status_file": "result/thai_set100_cache_status.csv",
+    "benchmark_ticker": "^SET.BK",
+    "latest_equity_sleeve_metrics_file": "result/thai_set100_pit_metrics.csv"
+  },
+  "thailand_pit_latest_equity_sleeve": {
+    "universe_mode": "set100_pit",
+    "n_assets": 30,
+    "n_clusters": 4,
+    "lookback_days": 504,
+    "rebalance_freq": "ME",
+    "max_weight": 0.08,
+    "benchmark_ticker": "^SET.BK",
+    "vol_proxy_ticker": "",
+    "include_momentum_features": true,
+    "include_momentum_signal": true,
+    "momentum_signal_mode": "mom_63",
+    "feature_flags": {
+      "resid_vol": false,
+      "drawdown": false,
+      "downside_beta": false
+    },
+    "dynamic_hmm_metrics": {
+      "cagr": 0.022156,
+      "sharpe": 0.208691,
+      "max_drawdown": -0.503271
+    },
+    "static_copula_metrics": {
+      "cagr": 0.021232,
+      "sharpe": 0.203822,
+      "max_drawdown": -0.505551
+    }
+  },
+  "us_th_blended_experiment": {
+    "script": "scripts/run_us_th_blended.py",
+    "sources": {
+      "thb_summary": "result/us_th_gold_btc_blended_summary_thb.csv",
+      "usd_summary": "result/us_th_gold_btc_blended_summary_usd.csv",
+      "thb_curves": "result/us_th_gold_btc_blended_curves_thb.csv",
+      "usd_curves": "result/us_th_gold_btc_blended_curves_usd.csv",
+      "latest_us_members": "result/latest_us_hmm_members.csv",
+      "latest_th_members": "result/latest_th_hmm_members.csv"
+    },
+    "period": {
+      "start": "2016-01-04",
+      "end": "2026-04-29"
+    },
+    "thb_best_sharpe": {
+      "strategy": "US/TH/Gold/BTC 45/15/30/10",
+      "cagr": 0.309435,
+      "annual_vol": 0.125485,
+      "sharpe": 1.974015,
+      "max_drawdown": -0.109031
+    },
+    "thb_best_cagr": {
+      "strategy": "US HMM/Gold/BTC 60/30/10",
+      "cagr": 0.360632,
+      "annual_vol": 0.147694,
+      "sharpe": 1.957762,
+      "max_drawdown": -0.13064
+    },
+    "interpretation": "Adding Thailand improved drawdown and slightly improved THB Sharpe around a 15% Thai sleeve, but US-only had the highest CAGR in this overlap-period sweep."
+  }
+}

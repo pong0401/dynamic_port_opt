@@ -1,0 +1,165 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import sys
+
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+SCRIPTS = ROOT / "scripts"
+for path in [SRC, SCRIPTS]:
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from dynamic_factor_copula import compute_port_opt_style_metrics, curve_from_returns, default_paths, monthly_rebalance_dates  # noqa: E402
+import run_spy_gold_btc_bil_adaptive_gold_country_winner as adaptive  # noqa: E402
+import run_spy_gold_btc_bil_country_etf_sweep as country  # noqa: E402
+import run_spy_gold_btc_bil_leverage_etf_sweep as lev  # noqa: E402
+
+OUTPUT_PREFIX = "spy_gold_btc_bil_balanced_plan_refine"
+COUNTRY_UNIVERSE = country.COUNTRY_ETFS
+
+
+@dataclass(frozen=True)
+class Config:
+    name: str
+    gold_rule: adaptive.GoldRule
+    boost_trigger: str
+    gold_boost: float
+    country_bucket: float
+    country_top_n: int
+
+
+def run_variant(prices: pd.DataFrame, returns: pd.DataFrame, config: Config, candidates: tuple[str, ...]):
+    schedule = monthly_rebalance_dates(prices.index, lookback_days=252, freq="ME")
+    cols = list(dict.fromkeys(["SPY", "Gold", "BTC", "BIL", *candidates]))
+    weights = pd.DataFrame(0.0, index=prices.index, columns=cols)
+    selections = []
+    for idx, date in enumerate(schedule[:-1]):
+        next_date = schedule[idx + 1]
+        test_idx = prices.index[(prices.index > date) & (prices.index <= next_date)]
+        if len(test_idx) == 0:
+            continue
+        base_w, base_selected = lev.baseline_weights(prices, date, "conservative_cash")
+        ranks = lev.momentum_rank(prices, date, candidates)
+        selected = ranks.loc[ranks["pass"].fillna(False), "ETF"].head(config.country_top_n).astype(str).tolist()
+        w = lev.funded_weights(base_w, selected, config.country_bucket, "spy")
+        if w.empty:
+            selected = []
+            w = base_w
+        boost_on = adaptive.spy_risk_off(prices, date, config.boost_trigger)
+        if boost_on:
+            w = adaptive.apply_gold_boost(w, config.gold_boost, "spy")
+        weights.loc[test_idx, w.index] = w.to_numpy(dtype=float)
+        selections.append(
+            {
+                "Strategy": config.name,
+                "rebalance_date": date,
+                "next_rebalance_date": next_date,
+                "base_selected": ",".join(base_selected),
+                "country_selected": ",".join(selected),
+                "country_count": len(selected),
+                "gold_boost_on": boost_on,
+            }
+        )
+    weights = weights.loc[weights.sum(axis=1).gt(0.0)].copy()
+    exposure = pd.DataFrame(1.0, index=weights.index, columns=weights.columns)
+    exposure["SPY"] = adaptive.trend_exposure(prices["SPY"], 300, 0.50).reindex(weights.index).ffill().fillna(1.0)
+    exposure["Gold"] = adaptive.gold_exposure(prices["Gold"], config.gold_rule).reindex(weights.index).ffill().fillna(1.0)
+    exposure["BTC"] = adaptive.trend_exposure(prices["BTC"], 50, 0.00).reindex(weights.index).ffill().fillna(1.0)
+    effective = weights * exposure
+    strat_ret = returns.reindex(effective.index).fillna(0.0).mul(effective, axis=1).sum(axis=1)
+    curve = curve_from_returns(strat_ret, initial=lev.INITIAL_VALUE).rename(config.name)
+    latest = effective.iloc[-1].rename("Effective Weight").reset_index().rename(columns={"index": "Asset"})
+    latest = latest.loc[latest["Effective Weight"].abs().gt(1e-12)].copy()
+    latest.insert(0, "Strategy", config.name)
+    latest.insert(1, "Date", effective.index.max())
+    return curve, pd.DataFrame(selections), latest, exposure
+
+
+def metrics_row(curve: pd.Series, config: Config, sel: pd.DataFrame, latest: pd.DataFrame, exposure: pd.DataFrame, candidates: tuple[str, ...]) -> dict[str, object]:
+    clean = curve.dropna()
+    row = compute_port_opt_style_metrics(clean, risk_free_rate=lev.RISK_FREE_RATE).to_dict()
+    latest_weights = latest.set_index("Asset")["Effective Weight"] if not latest.empty else pd.Series(dtype=float)
+    total = int(sel.shape[0]) if not sel.empty else 0
+    row.update(
+        {
+            "Strategy": config.name,
+            "Gold Rule": config.gold_rule.name,
+            "Boost Trigger": config.boost_trigger,
+            "Gold Boost": config.gold_boost,
+            "Country Bucket": config.country_bucket,
+            "Country Top N": config.country_top_n,
+            "Start": clean.index.min().date().isoformat(),
+            "End": clean.index.max().date().isoformat(),
+            "Country Active Rate": float(sel["country_count"].gt(0).mean()) if total else np.nan,
+            "Gold Boost Active Rate": float(sel["gold_boost_on"].mean()) if total else np.nan,
+            "Average Gold Exposure": float(exposure["Gold"].mean()),
+            "Latest SPY Weight": float(latest_weights.get("SPY", 0.0)),
+            "Latest Gold Weight": float(latest_weights.get("Gold", 0.0)),
+            "Latest BTC Weight": float(latest_weights.get("BTC", 0.0)),
+            "Latest BIL Weight": float(latest_weights.get("BIL", 0.0)),
+            "Latest Country Weight": float(latest_weights.reindex(candidates).fillna(0.0).sum()),
+            "Latest Country Assets": ",".join(latest.loc[latest["Asset"].isin(candidates), "Asset"].astype(str).tolist()),
+        }
+    )
+    return row
+
+
+def main() -> None:
+    paths = default_paths(ROOT)
+    paths.result_dir.mkdir(parents=True, exist_ok=True)
+    raw = country.load_prices()
+    prices = country.asset_prices(raw).ffill()
+    returns = prices.pct_change(fill_method=None).where(prices.notna()).fillna(0.0)
+    candidates = tuple(asset for asset in COUNTRY_UNIVERSE if asset in prices and prices[asset].dropna().shape[0] >= 2520)
+    gold_rules = [
+        adaptive.GoldRule("dd252_warn8_crash20_half", "dd_simple", warn_dd=-0.08, crash_dd=-0.20, warn_exposure=0.50, crash_exposure=0.50),
+        adaptive.GoldRule("dd252_warn8_crash15_50_25", "dd_simple", warn_dd=-0.08, crash_dd=-0.15, warn_exposure=0.50, crash_exposure=0.25),
+    ]
+    configs: list[Config] = []
+    for rule in gold_rules:
+        for trigger in ["spy_below_ma200_or_dd8", "spy_below_ma300_or_dd10"]:
+            for boost in [0.075, 0.10, 0.125]:
+                for bucket in [0.03, 0.05, 0.075]:
+                    for top_n in [1, 2]:
+                        name = f"balanced_refine {rule.name} boost{boost:.1%}_{trigger} country{bucket:.1%}_top{top_n}"
+                        configs.append(Config(name, rule, trigger, boost, bucket, top_n))
+
+    curves = {}
+    summaries = []
+    selections = []
+    latest_frames = []
+    for config in configs:
+        curve, sel, latest, exposure = run_variant(prices, returns, config, candidates)
+        curves[config.name] = curve
+        summaries.append(metrics_row(curve, config, sel, latest, exposure, candidates))
+        selections.append(sel)
+        latest_frames.append(latest)
+
+    summary = pd.DataFrame(summaries).sort_values(["Sharpe", "CAGR"], ascending=False)
+    summary.to_csv(paths.result_dir / f"{OUTPUT_PREFIX}_summary.csv", index=False)
+    pd.DataFrame(curves).to_csv(paths.result_dir / f"{OUTPUT_PREFIX}_curves.csv")
+    pd.concat(selections, ignore_index=True).to_csv(paths.result_dir / f"{OUTPUT_PREFIX}_selection_history.csv", index=False)
+    pd.concat(latest_frames, ignore_index=True).to_csv(paths.result_dir / f"{OUTPUT_PREFIX}_latest_weights.csv", index=False)
+    cols = [
+        "Strategy",
+        "CAGR",
+        "Annual Vol",
+        "Sharpe",
+        "Max Drawdown",
+        "Gold Boost Active Rate",
+        "Average Gold Exposure",
+        "Latest Gold Weight",
+        "Latest BIL Weight",
+        "Latest Country Assets",
+        "Latest Country Weight",
+    ]
+    print(summary[cols].head(40).to_string(index=False, float_format=lambda value: f"{value:.4f}"))
+
+
+if __name__ == "__main__":
+    main()
