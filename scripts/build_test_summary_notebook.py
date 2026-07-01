@@ -163,7 +163,7 @@ def build_registry() -> pd.DataFrame:
         },
         {
             "Step": 4,
-            "Experiment": "Confirmed best US overlay config",
+            "Experiment": "Historical confirmed US overlay config",
             "Mode": "precomputed",
             "Source": "result/joint_confirm_603010_504d_1m_overlay_summary_usd.csv",
             "Universe": "sp500_pit, top 30 liquid names",
@@ -172,7 +172,7 @@ def build_registry() -> pd.DataFrame:
             "Daily Exposure": "Yes",
             "Gold/BTC Mix": "60/30/10",
             "Report Currency": "USD / THB",
-            "Notes": "Current preferred confirmed baseline from best_config_latest.json.",
+            "Notes": "Historical confirmed US-only overlay; current default strategy is stored in best_config_latest.json default_strategy.",
         },
         {
             "Step": "3B",
@@ -653,7 +653,7 @@ def build_notebook() -> nbf.NotebookNode:
             - equity sleeve lookback = 504 trading days
             - overlay strategic rebalance = 1 month
 
-            The older legacy `756d / 3M` summary is intentionally not shown here to keep the section focused on the current preferred baseline.
+            The older legacy `756d / 3M` summary is intentionally not shown here; the current default strategy is loaded from `result/best_config_latest.json` separately.
             """
         ),
         code_cell(
@@ -806,8 +806,8 @@ def build_notebook() -> nbf.NotebookNode:
                         "Evidence": "result/multi_factor_copula_metrics.csv",
                     },
                     {
-                        "Question": "Current preferred confirmed US overlay config",
-                        "Answer": "Static HMM with momentum + Gold/BTC 60/30/10, 504d lookback, 1M strategic rebalance",
+                        "Question": "Current default strategy",
+                        "Answer": best_config["default_strategy"]["strategy"],
                         "Evidence": "result/best_config_latest.json",
                     },
                     {

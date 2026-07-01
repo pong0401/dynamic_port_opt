@@ -40,21 +40,25 @@ That notebook shows:
 
 ## Current Preferred Baseline
 
-The current preferred baseline for overlay comparisons is:
+The current default/preferred strategy is:
 
-- `Static HMM with momentum/Gold/BTC 60/30/10 daily exposure`
+- `One-model US cap 70% / TH cap 30% stockcap5 penalty0.02 assets50 + daily exposure`
 
-Why this is the preferred baseline:
+Why this is the preferred baseline now:
 
-- `60/30/10` had better Sharpe than `70/20/10` in the mix sweep
-- `momentum` materially improved performance only when used in both:
-  - model features
-  - optimizer signal
-- baseline momentum signal mode is `mom_63`
-- baseline feature set drops:
-  - `resid_vol`
-  - `drawdown`
-  - `downside_beta`
+- selected low-concentration one-model US/TH configuration from the concentration sweep
+- keeps US cap `70%`, TH cap `30%`, stock cap `5%`, concentration penalty `0.02`, and `50` selected assets per side
+- keeps Gold/BTC overlay assets and daily exposure active
+- baseline row has no AI/theme/segment cap; AI-tech and segment caps are guardrail experiments
+
+Baseline reproduction numbers to check before new experiments:
+
+- 10Y window (`2016-04-29` to `2026-04-29`): CAGR `26.39%`, Sharpe `1.3896`, Max Drawdown `-18.01%`
+- Full period (`2007-12-31` to `2026-04-29`): CAGR `19.77%`, Sharpe `1.0179`, Max Drawdown `-18.01%`
+- Source files:
+  - `result/us_th_one_model_us70_th30_concentration_sweep_period_compare_thb.csv`
+  - `result/us_th_one_model_us70_th30_concentration_sweep_summary_thb.csv`
+  - `result/us_th_one_model_us70_th30_concentration_sweep_latest_weights_thb.csv`
 
 ## Equity Sleeve Backtest Defaults
 
@@ -69,9 +73,23 @@ Unless a notebook section says otherwise, the main Static/Dynamic HMM backtest u
 
 ## Best Known Results
 
-### Best confirmed joint config
+### Current default one-model US/TH strategy
 
-This is the current best jointly re-tested config:
+- Strategy: `One-model US cap 70% / TH cap 30% stockcap5 penalty0.02 assets50 + daily exposure`
+- Source: `result/us_th_one_model_us70_th30_concentration_sweep_period_compare_thb.csv`
+- Full period THB metrics:
+  - CAGR: `19.77%`
+  - Sharpe: `1.0179`
+  - Max Drawdown: `-18.01%`
+- 10Y THB metrics:
+  - CAGR: `26.39%`
+  - Sharpe: `1.3896`
+  - Max Drawdown: `-18.01%`
+- Latest effective weights source: `result/us_th_one_model_us70_th30_concentration_sweep_latest_weights_thb.csv`
+
+### Historical best confirmed joint config
+
+This historical US-only overlay config is retained for comparison:
 
 - Strategy: `Static HMM with momentum/Gold/BTC 60/30/10 daily exposure`
 - Equity sleeve lookback: `504` trading days
@@ -107,7 +125,7 @@ THB-translated overlay results are available in:
 - `result/overlay_comparison_summary_thb.csv`
 - `result/overlay_comparison_curves_thb.csv`
 
-The current THB baseline counterpart of the preferred strategy is:
+The historical THB baseline counterpart of the previous preferred strategy is:
 
 - `Static HMM with momentum/Gold/BTC 60/30/10 daily exposure`
 - CAGR: `24.59%`

@@ -1,7 +1,7 @@
 {
   "repo": "dynamic_port_opt",
   "main_notebook": "notebook/multi_factor_copula_poc.ipynb",
-  "preferred_baseline_strategy": "Static HMM with momentum/Gold/BTC 60/30/10 daily exposure",
+  "preferred_baseline_strategy": "One-model US cap 70% / TH cap 30% stockcap5 penalty0.02 assets50 + daily exposure",
   "best_confirmed_joint_config": {
     "sources": {
       "usd": "result/joint_confirm_603010_504d_1m_overlay_summary_usd.csv",
@@ -171,5 +171,148 @@
       "max_drawdown": -0.13064
     },
     "interpretation": "Adding Thailand improved drawdown and slightly improved THB Sharpe around a 15% Thai sleeve, but US-only had the highest CAGR in this overlap-period sweep."
-  }
+  },
+  "default_strategy": {
+    "strategy": "One-model US cap 70% / TH cap 30% stockcap5 penalty0.02 assets50 + daily exposure",
+    "status": "current_default",
+    "sources": {
+      "summary_thb": "result/us_th_one_model_us70_th30_concentration_sweep_summary_thb.csv",
+      "period_compare_thb": "result/us_th_one_model_us70_th30_concentration_sweep_period_compare_thb.csv",
+      "latest_weights_thb": "result/us_th_one_model_us70_th30_concentration_sweep_latest_weights_thb.csv",
+      "effective_weights_thb": "result/us_th_one_model_us70_th30_concentration_sweep_effective_weights_thb.csv",
+      "concentration_history_thb": "result/us_th_one_model_us70_th30_concentration_sweep_concentration_history_thb.csv"
+    },
+    "config": {
+      "model": "one_model_us_th_gold_btc",
+      "currency_view": "THB",
+      "us_group_cap": 0.7,
+      "th_group_cap": 0.3,
+      "stock_cap": 0.05,
+      "concentration_penalty": 0.02,
+      "us_assets": 50,
+      "th_assets": 50,
+      "gold_cap": 0.3,
+      "btc_cap": 0.1,
+      "daily_exposure_overlay": true,
+      "momentum_signal_mode": "mom_63",
+      "risk_free_rate": 0.03
+    },
+    "full_period_metrics": {
+      "start": "2007-12-31",
+      "end": "2026-04-29",
+      "observations": 4761,
+      "total_return": 29.230004814828835,
+      "cagr": 0.1977320714890236,
+      "annual_vol": 0.1605493237221822,
+      "sharpe": 1.0178894922547168,
+      "sortino": 1.4737061501368651,
+      "max_drawdown": -0.1800956155458194,
+      "hit_rate": 0.5426470588235294
+    },
+    "period_metrics": {
+      "Full period": {
+        "start": "2007-12-31",
+        "end": "2026-04-29",
+        "observations": 4761,
+        "total_return": 29.230004814828835,
+        "cagr": 0.1977320714890236,
+        "annual_vol": 0.1605493237221822,
+        "sharpe": 1.0178894922547168,
+        "sortino": 1.4737061501368651,
+        "max_drawdown": -0.1800956155458194,
+        "hit_rate": 0.5426470588235294
+      },
+      "10Y": {
+        "start": "2016-04-29",
+        "end": "2026-04-29",
+        "observations": 2596,
+        "total_return": 10.162715266218887,
+        "cagr": 0.2638908033244482,
+        "annual_vol": 0.1558374401584931,
+        "sharpe": 1.3895792758420382,
+        "sortino": 1.9716409028608144,
+        "max_drawdown": -0.1800956155458194,
+        "hit_rate": 0.5518304431599229
+      },
+      "5Y": {
+        "start": "2021-04-29",
+        "end": "2026-04-29",
+        "observations": 1300,
+        "total_return": 1.982835275191432,
+        "cagr": 0.2359618296045831,
+        "annual_vol": 0.1582977956354466,
+        "sharpe": 1.2295137676732526,
+        "sortino": 1.8406210385381885,
+        "max_drawdown": -0.1577513733562169,
+        "hit_rate": 0.5327174749807544
+      },
+      "3Y": {
+        "start": "2023-05-01",
+        "end": "2026-04-29",
+        "observations": 780,
+        "total_return": 1.7865835147642342,
+        "cagr": 0.3924913716941178,
+        "annual_vol": 0.1735272068700528,
+        "sharpe": 1.8256046668112005,
+        "sortino": 2.7300900068400464,
+        "max_drawdown": -0.1209904353441104,
+        "hit_rate": 0.558408215661104
+      },
+      "1Y": {
+        "start": "2025-04-29",
+        "end": "2026-04-29",
+        "observations": 261,
+        "total_return": 0.6464445232585558,
+        "cagr": 0.6183779787205468,
+        "annual_vol": 0.1774608247413788,
+        "sharpe": 2.6455844912881123,
+        "sortino": 3.8558421849367184,
+        "max_drawdown": -0.079114383399674,
+        "hit_rate": 0.5692307692307692
+      }
+    },
+    "concentration": {
+      "average_us_stock_weight": 0.6012665111209684,
+      "average_th_stock_weight": 0.1022894349926492,
+      "average_gold_weight": 0.1290254910568997,
+      "average_btc_weight": 0.0216131064902329,
+      "average_cash_reduced_exposure_weight": 0.1458054563392497,
+      "latest_us_stock_weight": 0.5999999999999934,
+      "latest_th_stock_weight": 0.3000000000000073,
+      "latest_gold_weight": 0.0499999999999995,
+      "latest_btc_weight": 0.0,
+      "latest_cash_reduced_exposure_weight": 0.0499999999999994,
+      "latest_max_single_stock_weight": 0.0499999999999991,
+      "latest_top_5_stock_weight": 0.2499999999999959,
+      "latest_top_10_stock_weight": 0.499999999999992,
+      "latest_effective_stock_count": 23.33290261258576
+    },
+    "latest_weights": {
+      "date": "2026-04-29",
+      "weights": {
+        "GC=F": 0.0499999999999995,
+        "Cash / Reduced Exposure": 0.0499999999999994,
+        "MRK": 0.0499999999999991,
+        "XOM": 0.0499999999999991,
+        "COST": 0.0499999999999991,
+        "TXN": 0.0499999999999991,
+        "MU": 0.0499999999999991,
+        "AMAT": 0.0499999999999991,
+        "LRCX": 0.0499999999999991,
+        "JNJ": 0.0499999999999991,
+        "INTC": 0.0499999999999991,
+        "GEV": 0.0499999999999991,
+        "CVX": 0.0499999999999991,
+        "WMT": 0.0499999999999991,
+        "PTTEP.BK": 0.0434260488693138,
+        "BCP.BK": 0.0431821269312766,
+        "TOP.BK": 0.0429831360018815,
+        "HANA.BK": 0.0427082268117157,
+        "DELTA.BK": 0.0426829753314653,
+        "IVL.BK": 0.0426679852554702,
+        "PTTGC.BK": 0.0423495007988824
+      }
+    }
+  },
+  "previous_preferred_baseline_strategy": "Static HMM with momentum/Gold/BTC 60/30/10 daily exposure"
 }
